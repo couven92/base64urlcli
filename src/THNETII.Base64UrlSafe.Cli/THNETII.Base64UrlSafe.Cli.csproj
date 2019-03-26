@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <LangVersion>7.3</LangVersion>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>base64url</AssemblyName>
+    <PackageId>$(MSBuildProjectName)</PackageId>
+    <AssemblyTitle>$(MSBuildProjectName)</AssemblyTitle>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <DefineConstants Condition="'$(NoReferenceCodePages)'!='true'">NOCODEPAGES;$(DefineConstants)</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Description>URL-safe base64 encode/decode data and print to standard output</Description>    
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\dotnet-common\src\THNETII.Common\THNETII.Common.csproj" />
+    <ProjectReference Include="..\..\dotnet-common\src\THNETII.Common.BaseN\THNETII.Common.BaseN.csproj" />
+    <ProjectReference Include="..\..\dotnet-common\src\THNETII.Common.Cli\THNETII.Common.Cli.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.CommandLine.Experimental" Version="0.2.0-alpha.19174.3" />
+    <PackageReference Include="System.IO.Pipelines" Version="4.5.3" />
+    <PackageReference Include="System.Memory" Version="4.5.2" />
+    <PackageReference Condition="'$(NoReferenceCodePages)'!='true'"
+      Include="System.Text.Encoding.CodePages" Version="4.5.1" />
+  </ItemGroup>
+
+</Project>
