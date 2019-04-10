@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Builder;
 using System.CommandLine.Invocation;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -46,6 +47,7 @@ namespace THNETII.Base64UrlSafe.Cli
                 stdout.WriteLine($"{row[0].PadRight(sep)}: {row[1]}");
         }
 
+        [SuppressMessage("Design", "CA1031: Do not catch general exception types")]
         public static Task<int> Main(string[] args)
         {
 #if !NOCODEPAGES
