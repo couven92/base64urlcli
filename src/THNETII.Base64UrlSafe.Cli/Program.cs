@@ -17,7 +17,7 @@ using THNETII.Common.Serialization;
 
 namespace THNETII.Base64UrlSafe.Cli
 {
-    public static class Program
+    public static partial class Program
     {
         public static async Task InvokeAsync(
             IConsole console,
@@ -27,24 +27,43 @@ namespace THNETII.Base64UrlSafe.Cli
             FileInfo file = null,
             Encoding charset = null,
             int buffer = 4096,
-            string data = null,
             CancellationToken cancelToken = default
             )
         {
-            var stdout = console.Out;
-            string[][] table = new[]
+            if (decode)
             {
-                new[] { nameof(decode), $"{decode}" },
-                new[] { nameof(ignoreGarbage), $"{ignoreGarbage}" },
-                new[] { nameof(wrap), wrap is null ? $"{wrap}" : $"{wrap:N0} {"character".SuffixPluralS(wrap)}" },
-                new[] { nameof(file), $"{file}" },
-                new[] { nameof(charset), $"{charset?.EncodingName}" },
-                new[] { nameof(buffer), $"{buffer:N0} {"Byte".SuffixPluralS(buffer)}" },
-                new[] { nameof(data), $"{data}"}
-            };
-            var sep = table.Max(r => r[0].Length);
-            foreach (var row in table)
-                stdout.WriteLine($"{row[0].PadRight(sep)}: {row[1]}");
+                TextReader reader;
+                if (file is FileInfo && file.Name != "-")
+                {
+                    if (charset is Encoding)
+                        reader = new StreamReader(file.OpenRead(), charset);
+                    else
+                        reader = file.OpenText();
+                }
+                else if (charset is Encoding)
+                    reader = new StreamReader(Console.OpenStandardInput(), charset);
+                else
+                    reader = Console.In;
+                using (reader)
+                using (var output = Console.OpenStandardOutput())
+                {
+                    await DecodeAsync(reader, output, ignoreGarbage, cancelToken)
+                        .ConfigureAwait(false);
+                }
+            }
+            else
+            {
+                Stream input;
+                if (file is FileInfo && file.Name != "-")
+                    input = file.OpenRead();
+                else
+                    input = Console.OpenStandardInput();
+                using (input)
+                {
+                    await EncodeAsync(input, Console.Out, wrap.GetValueOrDefault(), cancelToken)
+                        .ConfigureAwait(false);
+                }
+            }
         }
 
         [SuppressMessage("Design", "CA1031: Do not catch general exception types")]
@@ -56,26 +75,27 @@ namespace THNETII.Base64UrlSafe.Cli
 
             var cliParser = new CommandLineBuilder(RootCommand())
                 .UseDefaults()
-                .UseMiddleware((invokeCtx, next) =>
+                .UseMiddleware(async (invokeCtx, next) =>
                 {
                     var cts = new CancellationTokenSource();
-                    void OnCancelKeyPress(object senter, ConsoleCancelEventArgs e)
+                    var onCancelKeyPress = new ConsoleCancelEventHandler((object senter, ConsoleCancelEventArgs e) =>
                     {
                         // If cancellation already has been requested,
                         // do not cancel process termination signal.
                         e.Cancel = !cts.IsCancellationRequested;
 
                         cts.Cancel(throwOnFirstException: true);
-                    }
-                    Console.CancelKeyPress += OnCancelKeyPress;
+                    });
+                    Console.CancelKeyPress += onCancelKeyPress;
 
                     invokeCtx.BindingContext.AddService(typeof(CancellationTokenSource), () => cts);
                     invokeCtx.BindingContext.AddService(typeof(CancellationToken), () => cts.Token);
 
-                    try { return next(invokeCtx); }
+                    try { await next(invokeCtx).ConfigureAwait(false); }
+                    catch (OperationCanceledException) { }
                     finally
                     {
-                        Console.CancelKeyPress -= OnCancelKeyPress;
+                        Console.CancelKeyPress -= onCancelKeyPress;
                     }
                 })
                 .Build();
@@ -87,12 +107,12 @@ namespace THNETII.Base64UrlSafe.Cli
                 root.AddOption(new Option(
                     new string[] { "-d", "--decode" },
                     "decode data (encodes by default)",
-                    BoolArgument()
+                    new Argument<bool>()
                     ));
                 root.AddOption(new Option(
                     new string[] { "-i", "--ignore-garbage" },
                     "when decoding, ignore non-alphabet characters",
-                    BoolArgument()
+                    new Argument<bool>()
                     ));
                 root.AddOption(new Option(
                     new string[] { "-w", "--wrap" },
@@ -114,31 +134,9 @@ namespace THNETII.Base64UrlSafe.Cli
                     "use SIZE as the read-buffer size. (Default: 4096)",
                     new Argument<int>(4096) { Name = "SIZE", Description = "Size to use for intermediate read buffer" }
                     ));
-                root.Argument = DataArgument();
                 root.Handler = CommandHandler.Create(typeof(Program).GetMethod(nameof(InvokeAsync)));
 
                 return root;
-
-                Argument<bool> BoolArgument(bool @default = default)
-                {
-                    var arg = new Argument<bool>(ConvertToBool)
-                    {
-                        Name = "B"
-                    };
-                    arg.SetDefaultValue(@default);
-                    return arg;
-
-                    ArgumentResult ConvertToBool(SymbolResult symbol)
-                    {
-                        try
-                        {
-                            string value = symbol.Arguments.FirstOrDefault();
-                            return ArgumentResult.Success(BooleanStringConverter.Parse(value));
-                        }
-                        catch (Exception e)
-                        { return ArgumentResult.Failure(e.Message); }
-                    }
-                }
 
                 Argument<int?> WrapArgument()
                 {
@@ -223,18 +221,6 @@ namespace THNETII.Base64UrlSafe.Cli
                         }
                         return ArgumentResult.Success(Encoding.UTF8);
                     }
-                }
-
-                Argument<string> DataArgument()
-                {
-                    var arg = new Argument<string>
-                    {
-                        Name = "DATA",
-                        Arity = ArgumentArity.ZeroOrOne,
-                        Description = "encode or decode DATA, overrides '--file'"
-                    };
-
-                    return arg;
                 }
             }
         }

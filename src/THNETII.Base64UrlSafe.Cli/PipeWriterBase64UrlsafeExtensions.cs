@@ -76,7 +76,7 @@ namespace THNETII.Base64UrlSafe.Cli
             var base64Status = Base64.EncodeToUtf8(bytesMemory.Span,
                 base64Memory.Span, out int bytesConsumed, out int base64Written,
                 isFinalBlock);
-            base64Status.ThrowIfFailed(nameof(Base64.EncodeToUtf8));
+            base64Status.ThrowIfFailed(nameof(Base64.EncodeToUtf8), isFinalBlock);
             base64Written = CommonBase64UrlSafe.MakeUrlSafeUtf8(
                 base64Memory.Slice(0, base64Written).Span
                 );

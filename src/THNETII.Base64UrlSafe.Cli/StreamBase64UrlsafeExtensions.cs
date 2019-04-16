@@ -146,7 +146,7 @@ namespace THNETII.Base64UrlSafe.Cli
                     base64Memory.Span, bytesMemory.Span,
                     out base64Consumed, out int bytesWritten,
                     isFinalBlock);
-                base64Status.ThrowIfFailed(nameof(Base64.DecodeFromUtf8));
+                base64Status.ThrowIfFailed(nameof(Base64.DecodeFromUtf8), isFinalBlock);
 
                 Memory<byte> bytesAvailable = bytesMemory.Slice(0, bytesWritten);
                 await stream.WriteAsync(bytesAvailable, cancelToken);
