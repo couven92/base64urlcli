@@ -12,7 +12,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Description>URL-safe base64 encode/decode data and print to standard output</Description>    
+    <Description>URL-safe base64 encode/decode data and print to standard output</Description>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,7 +20,7 @@
     <ProjectReference Include="..\..\dotnet-common\src\THNETII.Common.Text.Extensions\THNETII.Common.Text.Extensions.csproj" />
     <ProjectReference Include="..\..\dotnet-common\src\THNETII.Common\THNETII.Common.csproj" />
     <ProjectReference Include="..\..\dotnet-common\src\THNETII.Common.BaseN\THNETII.Common.BaseN.csproj" />
-    <ProjectReference Include="..\..\dotnet-common\src\THNETII.Common.Cli\THNETII.Common.Cli.csproj" />
+    <ProjectReference Include="..\..\dotnet-common\src\THNETII.CommandLine.Extensions\THNETII.CommandLine.Extensions.csproj" />
   </ItemGroup>
 
   <ItemGroup>
