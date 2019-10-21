@@ -13,7 +13,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using THNETII.Common;
-using THNETII.Common.Serialization;
 
 namespace THNETII.Base64UrlSafe.Cli
 {
